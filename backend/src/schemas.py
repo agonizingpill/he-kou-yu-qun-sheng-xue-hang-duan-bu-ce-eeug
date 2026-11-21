@@ -47,6 +47,26 @@ class AnalysisInput(BaseModel):
 class ReviewInput(BaseModel):
     noise_note:str=Field(min_length=1,max_length=240)
     decision:str=Field(min_length=4,max_length=120)
+class EchoPair(BaseModel):
+    echo_a_id:int
+    echo_b_id:int
+    relation:str=Field(min_length=2,max_length=16)
+class AnnotationInput(BaseModel):
+    transect_id:int
+    request_key:str|None=Field(default=None,min_length=8,max_length=100)
+    annotations:list[EchoPair]=Field(min_length=1,max_length=200)
+    @model_validator(mode='after')
+    def distinct(self):
+        if any(p.echo_a_id==p.echo_b_id for p in self.annotations):raise ValueError('不能把回波与自身标注')
+        return self
+class GroupingInput(BaseModel):
+    transect_id:int
+    eps:float=Field(ge=.3,le=3)
+    min_samples:int=Field(ge=3,le=12)
+    request_key:str|None=Field(default=None,min_length=8,max_length=100)
+class GroupingReviewInput(BaseModel):
+    noise_note:str=Field(min_length=1,max_length=240)
+    decision:str=Field(min_length=4,max_length=120)
 class CalibrationInput(BaseModel):
     net_id:int
     measured_mm:float=Field(gt=0,le=100)

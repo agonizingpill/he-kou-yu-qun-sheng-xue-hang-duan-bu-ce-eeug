@@ -81,6 +81,58 @@ class SchoolReview(Base):
     analysis_id:Mapped[int]=mapped_column(ForeignKey('school_analyses.id'),unique=True)
     noise_note:Mapped[str]=mapped_column(String(240))
     decision:Mapped[str]=mapped_column(String(120))
+class AnnotationState(Base):
+    __tablename__='annotation_states'
+    id:Mapped[int]=mapped_column(primary_key=True)
+    transect_id:Mapped[int]=mapped_column(ForeignKey('transects.id'),unique=True)
+    version:Mapped[int]=mapped_column(Integer,default=0)
+class EchoAnnotation(Base):
+    __tablename__='echo_annotations'
+    __table_args__=(UniqueConstraint('transect_id','echo_a_id','echo_b_id'),CheckConstraint('echo_a_id < echo_b_id'),CheckConstraint("relation in ('same','different')"))
+    id:Mapped[int]=mapped_column(primary_key=True)
+    transect_id:Mapped[int]=mapped_column(ForeignKey('transects.id'))
+    echo_a_id:Mapped[int]=mapped_column(ForeignKey('echoes.id'))
+    echo_b_id:Mapped[int]=mapped_column(ForeignKey('echoes.id'))
+    relation:Mapped[str]=mapped_column(String(12))
+    actor:Mapped[str]=mapped_column(String(40))
+    at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=now)
+class AnnotationBatch(Base):
+    __tablename__='annotation_batches'
+    __table_args__=(UniqueConstraint('transect_id','request_key'),)
+    id:Mapped[int]=mapped_column(primary_key=True)
+    transect_id:Mapped[int]=mapped_column(ForeignKey('transects.id'))
+    request_key:Mapped[str|None]=mapped_column(String(100),nullable=True)
+    payload_sha256:Mapped[str]=mapped_column(String(64))
+    annotation_version:Mapped[int]=mapped_column(Integer)
+    response:Mapped[dict]=mapped_column(JSON,default=dict)
+    actor:Mapped[str]=mapped_column(String(40))
+    at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=now)
+class SchoolGrouping(Base):
+    __tablename__='school_groupings'
+    __table_args__=(UniqueConstraint('transect_id','request_key'),)
+    id:Mapped[int]=mapped_column(primary_key=True)
+    transect_id:Mapped[int]=mapped_column(ForeignKey('transects.id'))
+    data_version:Mapped[int]=mapped_column(Integer)
+    annotation_version:Mapped[int]=mapped_column(Integer)
+    eps:Mapped[float]=mapped_column(Float)
+    min_samples:Mapped[int]=mapped_column(Integer)
+    status:Mapped[str]=mapped_column(String(20),default=AnalysisState.queued.value)
+    annotations:Mapped[list]=mapped_column(JSON,default=list)
+    assignments:Mapped[list]=mapped_column(JSON,default=list)
+    groups:Mapped[list]=mapped_column(JSON,default=list)
+    metrics:Mapped[dict]=mapped_column(JSON,default=dict)
+    error:Mapped[str]=mapped_column(String(200),default='')
+    request_key:Mapped[str|None]=mapped_column(String(100),nullable=True)
+    payload_sha256:Mapped[str]=mapped_column(String(64),default='')
+    at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=now)
+class GroupingReview(Base):
+    __tablename__='grouping_reviews'
+    id:Mapped[int]=mapped_column(primary_key=True)
+    grouping_id:Mapped[int]=mapped_column(ForeignKey('school_groupings.id'),unique=True)
+    noise_note:Mapped[str]=mapped_column(String(240))
+    decision:Mapped[str]=mapped_column(String(120))
+    annotation_version:Mapped[int]=mapped_column(Integer)
+    at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=now)
 class Net(Base):
     __tablename__='nets'
     id:Mapped[int]=mapped_column(primary_key=True)
